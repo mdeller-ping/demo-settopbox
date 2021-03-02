@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+
+<div class="jumbotron">
+    <h1 id="large_instruct"></h1>
+    <p id="small_instruct"></p>
+    <canvas class="mt-4 text-center" id="qr"></canvas>
+</div>
+
+<body>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.js"></script>
+
+    <script>
+
+        function recordPlayer(device_code) {
+                console.log('recordPlayer spinning');
+                setTimeout(function () {
+                    $.ajax({
+                        url: '/step2/?device_code=' + device_code,
+                        method: 'GET',
+                        dataType: 'json',
+                    })
+                        .done(function(data) {
+                            console.log('ajax call finished successfully');
+                            console.log(data);
+                            if (data.access_token) {
+                                console.log ("user did something");
+                                $('#small_instruct').text("Enjoy your day!");
+                                $('#qr').hide();
+
+                                // parse the access token
+
+                                let accessToken = data.access_token;
+                                let splitToken = accessToken.split(".");
+                                let payload = atob(splitToken[1]);
+
+                                let json = JSON.parse(payload);
+
+                                $('#large_instruct').text(json['givenName'] + ', you are all set!');
+
+
+                            } else {
+                                recordPlayer(device_code);
+                            }
+                    })
+                        .fail(function(data) {
+                            console.log('ajax call failed');
+                            console.log(data);
+                    });
+                }, 2000);
+        }
+
+        var settings = {
+            "url": "/step1/",
+            "method": "POST",
+                "timeout": 0,
+                "headers": {
+                    "Content-Type": "application/json"
+                }
+        };
+
+        $.ajax(settings)
+            .done(function(data) {
+                console.log(data.device_code);
+                console.log(data.verification_uri_complete);
+                $('#large_instruct').text("Please visit example.com/pair and enter " + data.user_code)
+                $('#small_instruct').text("Or you can visit " + data.verification_uri_complete)
+
+                var qr = new QRious({
+                    element: document.getElementById('qr'),
+                    value: data.verification_uri_complete,
+                    size: '256',
+                    background: 'black',
+                    foreground: 'white'
+                });
+
+                recordPlayer(data.device_code)
+
+            })
+            .fail(function(data, status, error) {
+                // something here
+            })
+
+    </script>
+</body>
+
+</html>
