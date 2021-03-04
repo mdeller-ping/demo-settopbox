@@ -2,6 +2,8 @@
 
 Example demo of the OAuth 2.0 Device Authorization Grant (https://tools.ietf.org/html/rfc8628) using PingFederate
 
+![Example Screenshot](/images/example.png?raw=true)
+
 ## Prerequisites
 
 * PingFederate
