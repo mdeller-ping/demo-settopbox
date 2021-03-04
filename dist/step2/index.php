@@ -1,16 +1,24 @@
 <?php
+
+// set output response type to json
+
 header('Content-Type: application/json');
 
-// get device code from query string
+// source our configuration variables
 
-$device_code = $_GET['device_code'];
+include_once "../config.php";
 
-// $device_code = 'YuO6GPWdIRCoFWmOmrhykm2TkB2Liau7LcHAfuAqZb';
+// get device code from the inbound post, sent by index.html
+
+$device_code = $_POST['device_code'];
+
+// build rest api call to pingfedeate token endpoint
+// we do this to pick up the auth token if the user has signed in
 
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
-  CURLOPT_URL => 'https://video-pingfederate-engine.ping-devops.com/as/token.oauth2',
+  CURLOPT_URL => $pingFederate . '/as/token.oauth2',
   CURLOPT_RETURNTRANSFER => true,
   CURLOPT_ENCODING => '',
   CURLOPT_MAXREDIRS => 10,
@@ -21,15 +29,30 @@ curl_setopt_array($curl, array(
   CURLOPT_FOLLOWLOCATION => true,
   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
   CURLOPT_CUSTOMREQUEST => 'POST',
-  CURLOPT_POSTFIELDS => 'client_id=df_client&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=' . $device_code,
+  CURLOPT_POSTFIELDS => 'client_id=' . $clientId . '&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=' . $device_code,
   CURLOPT_HTTPHEADER => array(
     'Content-Type: application/x-www-form-urlencoded'
   ),
 ));
 
-$response = curl_exec($curl);
+if ($response = curl_exec($curl)) {
 
-curl_close($curl);
-echo $response;
+  // received response from pingfederate
+
+  // we do not care what the response is, the caller (index.html) will interpret and react
+
+  // echo back the json
+
+  echo $response;
+
+} else {
+
+  // unable to communicate with pingfederate, echo back the error message as json
+
+  $error = array("errorMessage" => curl_error($curl));
+
+  echo json_encode($error);
+
+}
 
 ?>

@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en">
 
+<!-- this is a 10 foot interface for something like a TV -->
+
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -11,8 +13,8 @@
 </head>
 
 <div class="jumbotron">
-    <h1 id="large_instruct"></h1>
-    <p id="small_instruct"></p>
+    <h1 id="divInstruct" class="display-4"></h1>
+    <p id="divSmallPrint" class="lead"></p>
     <canvas class="mt-4 text-center" id="qr"></canvas>
 </div>
 
@@ -26,74 +28,82 @@
 
     <script>
 
-        function recordPlayer(device_code) {
-                console.log('recordPlayer spinning');
-                setTimeout(function () {
-                    $.ajax({
-                        url: '/step2/?device_code=' + device_code,
-                        method: 'GET',
-                        dataType: 'json',
-                    })
-                        .done(function(data) {
-                            console.log('ajax call finished successfully');
-                            console.log(data);
-                            if (data.access_token) {
-                                console.log ("user did something");
-                                $('#small_instruct').text("Enjoy your day!");
-                                $('#qr').hide();
+        // we will call this function again and again in a moment
 
-                                // parse the access token
+        function recordPlayer(thisDeviceCode) {
+            console.log('recordPlayer spinning');
+            setTimeout(function () {
+                $.ajax({
+                    url: '/step2/',
+                    method: 'POST',
+                    data: { device_code: thisDeviceCode }
+                })
+                .done(function(data) {
+                    console.log('ajax call finished successfully');
+                    console.log(data);
+                    if (data.access_token) {
+                        console.log ("received access token");
 
-                                let accessToken = data.access_token;
-                                let splitToken = accessToken.split(".");
-                                let payload = atob(splitToken[1]);
+                        $('#small_instruct').text("Enjoy your day!");
+                        $('#qr').hide();
 
-                                let json = JSON.parse(payload);
+                        // parse the access token
 
-                                $('#large_instruct').text(json['givenName'] + ', you are all set!');
+                        let accessToken = data.access_token;
+                        let splitToken = accessToken.split(".");
+                        let payload = atob(splitToken[1]);
 
+                        let json = JSON.parse(payload);
 
-                            } else {
-                                recordPlayer(device_code);
-                            }
-                    })
-                        .fail(function(data) {
-                            console.log('ajax call failed');
-                            console.log(data);
-                    });
-                }, 2000);
+                        $('#large_instruct').text(json['givenName'] + ', you are all set!');
+
+                    } else {
+                        // user has not authenticated yet, keep trying
+                        recordPlayer(thisDeviceCode);
+                    }
+                })
+                .fail(function(data) {
+                    console.log('ajax call failed');
+                    console.log(data);
+                });
+            }, 2000);
         }
 
-        var settings = {
-            "url": "/step1/",
-            "method": "POST",
-                "timeout": 0,
-                "headers": {
-                    "Content-Type": "application/json"
-                }
-        };
+        // but first we start here
 
-        $.ajax(settings)
-            .done(function(data) {
-                console.log(data.device_code);
-                console.log(data.verification_uri_complete);
-                $('#large_instruct').text("Please visit example.com/pair and enter " + data.user_code)
-                $('#small_instruct').text("Or you can visit " + data.verification_uri_complete)
+        $.ajax({
+            url: '/step1/',
+            method: 'GET'
+        })
+        .done(function(data) {
 
-                var qr = new QRious({
-                    element: document.getElementById('qr'),
-                    value: data.verification_uri_complete,
-                    size: '256',
-                    background: 'black',
-                    foreground: 'white'
-                });
+            console.log(data.device_code);
+            console.log(data.verification_uri_complete);
 
-                recordPlayer(data.device_code)
+            $('#divInstruct').text("Please visit example.com/pair and enter " + data.user_code);
+            $('#divDeviceCode').text(data.user_code);
+            $('#divSmallPrint').text("Or you can visit " + data.verification_uri_complete)
 
-            })
-            .fail(function(data, status, error) {
-                // something here
-            })
+            // generate a QR codej
+
+            var qr = new QRious({
+                element: document.getElementById('qr'),
+                value: data.verification_uri_complete,
+                size: '256',
+                background: 'black',
+                foreground: 'white'
+            });
+
+            // we have a device_code, lets start checking if the user signed in
+
+            recordPlayer(data.device_code)
+
+        })
+        .fail(function(data, status, error) {
+
+            // TODO some error handling
+
+        })
 
     </script>
 </body>
