@@ -8,6 +8,7 @@ Example demo of the OAuth 2.0 Device Authorization Grant (https://tools.ietf.org
 
 * PingFederate
 * OAuth Client in PingFederate configured for Device Auth Grant
+* Access Token includes givenName claim
 * Docker or Kubernetes
 
 ## Installation
