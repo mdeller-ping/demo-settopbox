@@ -44,7 +44,7 @@
                     if (data.access_token) {
                         console.log ("received access token");
 
-                        $('#small_instruct').text("Enjoy your day!");
+                        $('#divInstruct').text("Cool.  Your device has been paired.  Enjoy your day!");
                         $('#qr').hide();
 
                         // parse the access token
@@ -55,7 +55,7 @@
 
                         let json = JSON.parse(payload);
 
-                        $('#large_instruct').text(json['givenName'] + ', you are all set!');
+                        $('#divSmallPrint').text(json['givenName'] + ', you are all set!');
 
                     } else {
                         // user has not authenticated yet, keep trying
